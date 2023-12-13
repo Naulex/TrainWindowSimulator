@@ -1,0 +1,1939 @@
+﻿<Window x:Class="ProjectNaumov.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ProjectNaumov"
+        mc:Ignorable="d"
+        Title="Симулятор смотрения в окно поезда HD720p60fps" Height="720" Width="1280" ResizeMode="NoResize" Icon="pack://application:,,,/Resources/ico.ico">
+    <!-- Иконка упакована в ресурсы, так к ней проще обращаться -->
+
+    <Window.Resources>
+        <!--Для анимации объектов за окном используются два пути: один для облаков, другой для объектов на земле. Они описаны ниже-->
+        <PathGeometry x:Key="geometryPath">
+            <PathFigure IsClosed="False" StartPoint="1500,-10">
+                <PolyLineSegment Points="-300,-10" />
+            </PathFigure>
+        </PathGeometry>
+
+        <PathGeometry x:Key="land">
+            <PathFigure IsClosed="False" StartPoint="0, 0">
+                <PolyLineSegment Points="-10000 0" />
+            </PathFigure>
+        </PathGeometry>
+    </Window.Resources>
+    <Grid>
+
+
+        <DockPanel Visibility="Visible" Panel.ZIndex="10000" Margin="0 10 0 0"  x:Name="doska">
+            <!-- Этот докпанел содержит в себе стартовый экран, куда нужно ввести имя. На всякий случай у него максимальный z индекс, чтобы его ничего не перекрыло-->
+            <Canvas>
+                <Ellipse Fill="Wheat" Height="781" Width="1402" Canvas.Top="-52" Canvas.Left="-60" RenderTransformOrigin="0.018,0.508"/>
+                <Rectangle  Panel.ZIndex="100" Canvas.Top="60" Canvas.Left="390" Fill="BurlyWood" Width="500" Height="600"/>
+                <Rectangle  Panel.ZIndex="101" Canvas.Top="65" Canvas.Left="415" Fill="GhostWhite" Width="450" Height="590"/>
+                <StackPanel Canvas.Left="440" Canvas.Top="70" Panel.ZIndex="102" MaxWidth="450" VerticalAlignment="Center"  HorizontalAlignment="Center">
+                    <Image  MaxWidth="300" Image.Stretch="UniformToFill" Source="Resources/1.png"/>
+                    <TextBlock  Margin="10 10 10 10" Foreground="Black" FontSize="20" TextWrapping="Wrap">Проверка билетов! Укажите своё имя!
+                        <TextBlock.Effect>
+                            <DropShadowEffect ShadowDepth="1" BlurRadius="30" Color="Black" />
+                        </TextBlock.Effect></TextBlock>
+                    <TextBox Background="WhiteSmoke" Margin="10 10 10 10"  x:Name="textBox1"></TextBox>
+
+                    <DockPanel Margin="10 10 10 10">
+                        <TextBlock HorizontalAlignment="Center" Foreground="Black" FontSize="20" TextWrapping="Wrap">Подпись:
+                            <TextBlock.Effect>
+                                <DropShadowEffect ShadowDepth="1" BlurRadius="30" Color="Black" />
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <InkCanvas Background="WhiteSmoke" Width="300" Height="150">
+                        </InkCanvas>
+                    </DockPanel>
+                    <Button   x:Name="button1" FontSize="20" Margin="50 50 50 0" Content="Войти" Click="Button1_Click">
+                        <Button.Background>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="LightBlue" Offset="0" />
+                                <GradientStop Color="GreenYellow" Offset="1" />
+                            </RadialGradientBrush>
+                        </Button.Background>
+                    </Button>
+                    <Button x:Name="Author" FontSize="20" Margin="50 10 50 50" Content="Автор" Click="Author_Click">
+                        <Button.Background>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="LightBlue" Offset="0" />
+                                <GradientStop Color="CadetBlue" Offset="1" />
+                            </RadialGradientBrush>
+                        </Button.Background>
+                    </Button>
+                </StackPanel>
+            </Canvas>
+        </DockPanel>
+
+
+        <StackPanel x:Name="sky" >
+            <!-- Небо изменяется по ключевым кадрам от дневного к ночному. тайминги подбирались вручную-->
+            <StackPanel.Background>
+                <SolidColorBrush Color="LightBlue" x:Name="MyAnimatedBrush" />
+            </StackPanel.Background>
+            <StackPanel.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimationUsingKeyFrames
+                Storyboard.TargetProperty="Color"
+                Storyboard.TargetName="MyAnimatedBrush"
+                 FillBehavior="HoldEnd" RepeatBehavior="Forever">
+                                <ColorAnimationUsingKeyFrames.KeyFrames>
+                                    <SplineColorKeyFrame Value="DarkBlue" KeyTime="0:0:8" />
+                                    <SplineColorKeyFrame Value="DarkBlue" KeyTime="0:0:16" />
+                                    <SplineColorKeyFrame Value="LightBlue" KeyTime="0:0:24" />
+                                    <SplineColorKeyFrame Value="LightBlue" KeyTime="0:0:32" />
+                                    <SplineColorKeyFrame Value="DarkBlue" KeyTime="0:0:40" />
+                                    <SplineColorKeyFrame Value="DarkBlue" KeyTime="0:0:48" />
+                                    <SplineColorKeyFrame Value="LightBlue" KeyTime="0:0:56" />
+                                    <SplineColorKeyFrame Value="LightBlue" KeyTime="0:1:4" />
+                                </ColorAnimationUsingKeyFrames.KeyFrames>
+                            </ColorAnimationUsingKeyFrames>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </StackPanel.Triggers>
+        </StackPanel>
+
+        <Ellipse x:Name="sun"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="100" Margin="0,-41,547,0" RenderTransformOrigin="0.525,5.92">
+            <!-- Солнце-->
+            <Ellipse.Fill>
+                <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                    <GradientStop Color="Yellow" Offset="0" />
+                    <GradientStop Color="Orange" Offset="1" />
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Ellipse x:Name="moon"  HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="100" Margin="0,-41,566,0" RenderTransformOrigin="0.46,5.95">
+            <!-- Луна-->
+            <Ellipse.Fill>
+                <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                    <GradientStop Color="White" Offset="0" />
+                    <GradientStop Color="LightGray" Offset="1" />
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+
+        <Canvas x:Name="clouds">
+            <!-- Облака. Все движутся с разной скоростью-->
+            <Ellipse Fill="White" Height="163" Width="459" Canvas.Left="235" Canvas.Top="89">
+                <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:10" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:10" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Ellipse.Triggers>
+            </Ellipse>
+            <Ellipse Fill="White" Height="163" Width="471" Canvas.Left="164" Canvas.Top="-34">
+                <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:8" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:8" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Ellipse.Triggers>
+            </Ellipse>
+            <Ellipse Fill="White" Height="163" Width="411" Canvas.Left="764" Canvas.Top="10">
+                <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:7" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:7" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Ellipse.Triggers>
+            </Ellipse>
+            <Ellipse Fill="White" Height="163" Width="491" Canvas.Left="553" Canvas.Top="89" RenderTransformOrigin="0.479,0.528">
+                <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:7" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:7" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource geometryPath}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Ellipse.Triggers>
+            </Ellipse>
+
+
+
+            <Canvas x:Name="mountain">
+                <!-- Горы -->
+                <Polygon Fill="LightPink" Points="0, 0, 150, -500, 300,0" Canvas.Left="7205" Canvas.Top="481" />
+                <Polygon Fill="GhostWhite" Points="0, 0, 150, -500, 300,0" Canvas.Left="7205" Canvas.Top="481" />
+                <Polygon Fill="LightPink" Points="0, 0, 150, -500, 300,0" Canvas.Left="7297" Canvas.Top="552" />
+                <Polygon Points="0, 0, 150, -500, 300,0" Canvas.Left="7297" Canvas.Top="552">
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="WhiteSmoke" Offset="0.1" />
+                            <GradientStop Color="LightGray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                </Polygon>
+                <Polygon Fill="LightPink" Points="0, 0, 150, -500, 300,0" Canvas.Left="7094" Canvas.Top="520" />
+                <Polygon Fill="GhostWhite" Points="0, 0, 150, -500, 300,0" Canvas.Left="7094" Canvas.Top="520" />
+
+                <Rectangle Canvas.Right="220"  Width="63" Height="3" Fill="Gray" Canvas.Left="7612" Canvas.Top="91" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1"/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="102.423"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="11" Height="12" Fill="Wheat" Canvas.Left="7618" Canvas.Top="98" RenderTransformOrigin="0.5,0.5" RadiusY="10.5" RadiusX="10.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleY="-0.528"/>
+                            <RotateTransform Angle="-91.848"/>
+                            <TranslateTransform X="-0.12" Y="0.004"/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+
+
+                <Rectangle Canvas.Right="220"  Width="63" Height="3" Fill="Gray" Canvas.Left="7568" Canvas.Top="92" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1"/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="64.212"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="15" Height="2" Fill="Wheat" Canvas.Left="7625" Canvas.Top="105" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1"/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="122.377"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="15" Height="2" Fill="Wheat" Canvas.Left="7607" Canvas.Top="116" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1"/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="142.84"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Canvas.Right="220" Fill="LightCoral"  Width="26" Height="14" Canvas.Left="7612" Canvas.Top="114" RenderTransformOrigin="0.5,0.5" RadiusY="10.5" RadiusX="10.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-91.848"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Ellipse Height="70" Width="75" Canvas.Left="7582" Canvas.Top="20">
+                    <Ellipse.Fill>
+                        <LinearGradientBrush>
+                            <GradientStop Color="Red" Offset="0.2" />
+                            <GradientStop Color="Yellow" Offset="0.4" />
+                            <GradientStop Color="Green" Offset="0.6" />
+                            <GradientStop Color="Blue" Offset="0.8" />
+                            <GradientStop Color="Violet" Offset="1" />
+                        </LinearGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Rectangle Canvas.Right="220"  Width="39" Height="21" Fill="DarkOliveGreen" Canvas.Left="7604" Canvas.Top="118" RadiusY="8.25" RadiusX="8.25"/>
+                <Polygon Points="0, 0, 150, -500, 600,20" Canvas.Left="7016" Canvas.Top="547">
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="White" Offset="0.1" />
+                            <GradientStop Color="LightGray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                </Polygon>
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:1:30" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:1:30" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+
+            <Canvas x:Name="Town">
+                <!-- Город -->
+                <Rectangle Canvas.Right="220"  Width="57" Height="120" Canvas.Left="6186" Canvas.Top="371">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="79" Height="189" Canvas.Left="6243" Canvas.Top="302">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="43" Height="278" Canvas.Left="6327" Canvas.Top="213">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="47" Height="375" Canvas.Left="6375" Canvas.Top="116">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="121" Height="411" Canvas.Left="6427" Canvas.Top="156" RadiusY="39" RadiusX="39">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Image  MaxWidth="300" Image.Stretch="UniformToFill" Source="Resources/2.png" Canvas.Left="6447" Canvas.Top="167" Height="76" Width="83"/>
+                <Polygon Fill="LightGray"  Points="0, 0, 60, 10, 20, 60" Canvas.Left="6972" Canvas.Top="155" RenderTransformOrigin="0.585,0.762" Height="68" Width="71">
+
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-274.064"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+                <Rectangle Canvas.Right="220"  Width="22" Height="56" Fill="Gray" Canvas.Left="6952" Canvas.Top="177" RadiusY="6.88" RadiusX="6.88" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="93.703"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Canvas.Right="220" Fill="LightGray"  Width="47" Height="123" Canvas.Left="6953" Canvas.Top="121" RadiusY="39" RadiusX="39" RenderTransformOrigin="0.5,0.5">
+
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="93.703"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+
+
+                <Rectangle Canvas.Right="220"  Width="123" Height="375" Canvas.Left="6553" Canvas.Top="116">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Image  MaxWidth="300" Image.Stretch="UniformToFill" Source="Resources/1.png" Canvas.Left="6553" Canvas.Top="128" Height="68" Width="123"/>
+                <Rectangle Canvas.Right="220"  Width="87" Height="278" Canvas.Left="6681" Canvas.Top="213">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="75" Height="189" Canvas.Left="6768" Canvas.Top="302">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightGray" Offset="0.1" />
+                            <GradientStop Color="Gray" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="48" Height="16" Canvas.Left="6190" Canvas.Top="378">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="48" Height="16" Canvas.Left="6190" Canvas.Top="399">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="48" Height="16" Canvas.Left="6190" Canvas.Top="420">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="48" Height="16" Canvas.Left="6190" Canvas.Top="441">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="48" Height="16" Canvas.Left="6190" Canvas.Top="462">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="308">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="48" Canvas.Left="6553" Canvas.Top="201">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="48" Canvas.Left="6604" Canvas.Top="414">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="48" Canvas.Left="6604" Canvas.Top="267">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="48" Canvas.Left="6553" Canvas.Top="339">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="329">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="350">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="371">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="392">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="413">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="434">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="72" Height="16" Canvas.Left="6247" Canvas.Top="455">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="26" Height="29" Canvas.Left="6336" Canvas.Top="220" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="26" Height="28" Canvas.Left="6336" Canvas.Top="278" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="26" Height="29" Canvas.Left="6336" Canvas.Top="337" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="26" Height="29" Canvas.Left="6336" Canvas.Top="407" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="10" Height="355" Canvas.Left="6381" Canvas.Top="123" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="10" Height="355" Canvas.Left="6394" Canvas.Top="123" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="21" Height="258" Canvas.Left="6693" Canvas.Top="220" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="21" Height="258" Canvas.Left="6731" Canvas.Top="220" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="32" Height="71" Canvas.Left="6790" Canvas.Top="350" RenderTransformOrigin="0.52,0.406" RadiusY="15" RadiusX="15">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="10" Height="355" Canvas.Left="6408" Canvas.Top="123" RenderTransformOrigin="0.52,0.406">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="13" Height="257" Canvas.Left="6478" Canvas.Top="244" RenderTransformOrigin="0.52,0.406" RadiusY="8.166" RadiusX="8.166">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-19.111"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="13" Height="264" Canvas.Left="6474" Canvas.Top="295" RenderTransformOrigin="0.52,0.406" RadiusY="8.166" RadiusX="8.166">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-19.111"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="13" Height="264" Canvas.Left="6467" Canvas.Top="346" RenderTransformOrigin="0.52,0.406" RadiusY="8.166" RadiusX="8.166">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-19.111"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="13" Height="202" Canvas.Left="6496" Canvas.Top="242" RenderTransformOrigin="0.52,0.406" RadiusY="8.166" RadiusX="8.166">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-19.111"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightYellow" Offset="0.1" />
+                            <GradientStop Color="LightGoldenrodYellow" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <Polygon Fill="Yellow" Opacity="0.3" Points="50, 150, 400, 50, 250, 400" Canvas.Left="6087" Canvas.Top="-152" RenderTransformOrigin="0.585,0.762" Width="297" Height="168" >
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="261.005"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+                <Polygon Fill="Yellow" Opacity="0.3" Points="50, 150, 400, 50, 250, 400" Canvas.Left="6232" Canvas.Top="-316" RenderTransformOrigin="0.585,0.762" Width="297" Height="168" >
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="261.005"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+                <Polygon Fill="Yellow" Opacity="0.3" Points="50, 150, 400, 50, 250, 400" Canvas.Left="6696" Canvas.Top="-170" RenderTransformOrigin="0.585,0.762" Width="297" Height="168" >
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="306.136"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+                <Polygon Fill="Yellow" Opacity="0.3" Points="50, 150, 400, 50, 250, 400" Canvas.Left="6791" Canvas.Top="-107" RenderTransformOrigin="0.585,0.762" Width="297" Height="168" >
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="306.136"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:1:10" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:1:10" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+
+            <Canvas x:Name="dacha">
+                <!-- Деревня -->
+                <Rectangle Canvas.Right="220"  Width="54" Height="72" Canvas.Left="7664" Canvas.Top="397">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="27" Height="36" Canvas.Left="7677" Canvas.Top="415" RadiusY="14" RadiusX="14">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightBlue" Offset="0.1" />
+                            <GradientStop Color="Blue" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Polygon Points="0, 0,40, 30, 80,0" Canvas.Left="7308" Canvas.Top="290" Height="116" Width="423" RenderTransformOrigin="0.5,0.5" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#563B0D" Offset="0.8" />
+                            <GradientStop Color="#2E1F05" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-180"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+                <Rectangle Canvas.Right="220"  Width="54" Height="72" Canvas.Left="7990" Canvas.Top="397">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="27" Height="36" Canvas.Left="8002" Canvas.Top="415" RadiusY="14" RadiusX="14">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightBlue" Offset="0.1" />
+                            <GradientStop Color="Blue" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Polygon Points="0, 0,40, 30, 80,0" Canvas.Left="7634" Canvas.Top="287" Height="116" Width="423" RenderTransformOrigin="0.5,0.5" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#563B0D" Offset="0.8" />
+                            <GradientStop Color="#2E1F05" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-180"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+                <Rectangle Canvas.Right="220"  Width="54" Height="72" Canvas.Left="8242" Canvas.Top="397">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="54" Height="130" Canvas.Left="8212" Canvas.Top="339">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="27" Height="36" Canvas.Left="8225" Canvas.Top="361">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightBlue" Offset="0.1" />
+                            <GradientStop Color="Blue" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <Rectangle Canvas.Right="220"  Width="26" Height="36" Canvas.Left="8256" Canvas.Top="410">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightBlue" Offset="0.1" />
+                            <GradientStop Color="Blue" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Polygon  Points="0, 0,40, 30, 80,0" Canvas.Left="7857" Canvas.Top="227" Height="117" Width="420" RenderTransformOrigin="0.5,0.5" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#563B0D" Offset="0.8" />
+                            <GradientStop Color="#2E1F05" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-180.298"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+
+                <Rectangle Canvas.Right="220"  Width="59" Height="191" Canvas.Left="8102" Canvas.Top="339" RadiusY="29.5" RadiusX="29.5">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Polygon  Points="0, 0,40, 30, 80,0" Canvas.Left="8014" Canvas.Top="450" Height="116" Width="424" RenderTransformOrigin="0.5,0.5" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="NavajoWhite" Offset="0.1" />
+                            <GradientStop Color="Wheat" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-313.094"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+                <Polygon Points="0, 0,40, 30, 80,0" Canvas.Left="7818" Canvas.Top="160" Height="116" Width="424" RenderTransformOrigin="0.5,0.5" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="NavajoWhite" Offset="0.1" />
+                            <GradientStop Color="Wheat" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-135.377"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+                <Rectangle Canvas.Right="220"  Width="96" Height="69" Canvas.Left="7840" Canvas.Top="400">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="27" Height="36" Canvas.Left="7853" Canvas.Top="415">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightBlue" Offset="0.1" />
+                            <GradientStop Color="Blue" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="27" Height="36" Canvas.Left="7897" Canvas.Top="415">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="LightBlue" Offset="0.1" />
+                            <GradientStop Color="Blue" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="13" Height="69" Canvas.Left="7761" Canvas.Top="400">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="BurlyWood" Offset="0.1" />
+                            <GradientStop Color="#563B0D" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Polygon  Points="0, 0,80, 30, 200,0" Canvas.Left="7522" Canvas.Top="287" Height="116" Width="423" RenderTransformOrigin="0.5,0.5" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#563B0D" Offset="0.8" />
+                            <GradientStop Color="#2E1F05" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-180"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+
+
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:30" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:30" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+
+
+            <Canvas x:Name="stolb">
+                <!-- Столб который мелькает в кадре -->
+                <Rectangle Canvas.Right="220"  Width="16" Height="86" Fill="Gray" Canvas.Left="6890" Canvas.Top="409"/>
+                <Rectangle Canvas.Right="220"  Width="16" Height="21" Fill="White" Canvas.Left="6890" Canvas.Top="426"/>
+                <Rectangle Canvas.Right="220"  Width="16" Height="22" Fill="Black" Canvas.Left="6890" Canvas.Top="409"/>
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:0.5" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:0.5" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+            <Canvas>
+                <!-- Деревья -->
+                <Canvas x:Name="fields">
+                    <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="150" Canvas.Top="254.539" Canvas.Left="1392.5" Height="247.922" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="113.424">
+                        <Path.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleY="-1" ScaleX="-1"/>
+                                <SkewTransform/>
+                                <RotateTransform Angle="19.562"/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </Path.RenderTransform>
+                        <Path.Data>
+                            <PathGeometry>
+                                <PathFigure IsClosed="True" StartPoint="0,0">
+                                    <ArcSegment SweepDirection="Clockwise" Point="-40,-200" Size="40,200" />
+                                </PathFigure>
+                            </PathGeometry>
+                        </Path.Data>
+                    </Path>
+                    <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="190" Canvas.Top="488.5" Canvas.Left="1447.5">
+                        <Path.Data>
+                            <PathGeometry>
+                                <PathFigure IsClosed="True" StartPoint="0,0">
+                                    <ArcSegment SweepDirection="Clockwise" Point="0,-200" Size="50,150" />
+                                </PathFigure>
+                            </PathGeometry>
+                        </Path.Data>
+                    </Path>
+                    <Ellipse Canvas.Right="90" Canvas.Top="158" Width="220" Height="182" Canvas.Left="1386" >
+                        <Ellipse.Fill>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="Green" Offset="0" />
+                                <GradientStop Color="GreenYellow" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Ellipse Canvas.Right="100" Canvas.Top="80" Width="242" Height="230" Canvas.Left="1322" >
+                        <Ellipse.Fill>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="Green" Offset="0" />
+                                <GradientStop Color="GreenYellow" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Ellipse Canvas.Right="180" Canvas.Top="168" Width="242" Height="216" Canvas.Left="1288" >
+                        <Ellipse.Fill>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="Green" Offset="0" />
+                                <GradientStop Color="GreenYellow" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Canvas.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:10" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                    </DoubleAnimationUsingPath>
+                                    <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:10" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                    </DoubleAnimationUsingPath>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Canvas.Triggers>
+                </Canvas>
+            </Canvas>
+
+            <Canvas>
+                <Path Stroke="LightGray" StrokeThickness="10" Fill="LightGray" Canvas.Right="150" Canvas.Top="218" Canvas.Left="1715" Height="240.344" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="70.168">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1" ScaleX="-1"/>
+                            <SkewTransform AngleY="-18.662"/>
+                            <RotateTransform Angle="19.562"/>
+                            <TranslateTransform X="-21.93" Y="61.716"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-40,-200" Size="40,200" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Path Stroke="LightGray" StrokeThickness="10" Fill="LightGray" Canvas.Right="190" Canvas.Top="317" Canvas.Left="1681" Stretch="Fill" Width="51">
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="0,-200" Size="50,150" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Ellipse Canvas.Right="170" Canvas.Top="106" Width="208" Height="245" Canvas.Left="1562" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="DarkGreen" Offset="0" />
+                            <GradientStop Color="Green" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-27.039"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="90" Canvas.Top="196" Width="226" Height="174" Canvas.Left="1672" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="DarkGreen" Offset="0" />
+                            <GradientStop Color="Green" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Canvas.Right="220" Canvas.Top="53" Width="173" Height="148" Canvas.Left="1596" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="DarkGreen" Offset="0" />
+                            <GradientStop Color="Green" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="58.687"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="130" Canvas.Top="70" Width="176" Height="121" Canvas.Left="1657" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="DarkGreen" Offset="0" />
+                            <GradientStop Color="Green" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleX="-38.928"/>
+                            <RotateTransform/>
+                            <TranslateTransform X="20.192"/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="220" Canvas.Top="80" Width="222" Height="221" Canvas.Left="1698" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="DarkGreen" Offset="0" />
+                            <GradientStop Color="Green" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:9" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:9" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+            <Canvas>
+                <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="150" Canvas.Top="232" Canvas.Left="1920.128" Height="326.438" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="117.744">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1" ScaleX="-1"/>
+                            <SkewTransform AngleY="-40.117"/>
+                            <RotateTransform Angle="19.562"/>
+                            <TranslateTransform X="-16" Y="45.027"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-40,-200" Size="40,200" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="190" Canvas.Top="262" Canvas.Left="1916.107" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="52.786" Height="321.024">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-4.326"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="0,-200" Size="50,150" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Ellipse Canvas.Right="100" Canvas.Top="126" Width="224" Height="254" Canvas.Left="1894" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="GreenYellow" Offset="0" />
+                            <GradientStop Color="YellowGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Canvas.Right="100" Canvas.Top="111" Width="264" Height="276" Canvas.Left="1826" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="GreenYellow" Offset="0" />
+                            <GradientStop Color="YellowGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-37.112"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="100" Canvas.Top="41" Width="258" Height="242" Canvas.Left="1855" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="GreenYellow" Offset="0" />
+                            <GradientStop Color="YellowGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-37.112"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:7" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:7" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+            <Canvas>
+                <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="150" Canvas.Top="192" Canvas.Left="2222.128" Height="326.438" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="117.744">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1" ScaleX="-1"/>
+                            <SkewTransform AngleY="-40.117"/>
+                            <RotateTransform Angle="19.562"/>
+                            <TranslateTransform X="-16" Y="45.027"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-40,-200" Size="40,200" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="190" Canvas.Top="258" Canvas.Left="2216.107" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="52.786" Height="321.024">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-4.326"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="0,-200" Size="50,150" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Ellipse Canvas.Right="100" Canvas.Top="28" Width="280" Height="279" Canvas.Left="2120" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Canvas.Right="220" Canvas.Top="129" Width="142" Height="180" Canvas.Left="2275" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="58.687"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="130" Canvas.Top="216" Width="114" Height="50" Fill="Green" Canvas.Left="2172" >
+
+                </Ellipse>
+                <Ellipse Canvas.Right="220" Canvas.Top="28" Width="120" Height="138" Canvas.Left="2082" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Canvas.Right="100" Canvas.Top="212" Width="187" Height="134" Canvas.Left="2115" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="-37.112"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:6" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:6" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+            <Canvas>
+                <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="150" Canvas.Top="248" Canvas.Left="2466" Height="240.344" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="70.168">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1" ScaleX="-1"/>
+                            <SkewTransform AngleY="-18.662"/>
+                            <RotateTransform Angle="19.562"/>
+                            <TranslateTransform X="-21.93" Y="61.716"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-40,-200" Size="40,200" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Path Stroke="SaddleBrown" StrokeThickness="10" Fill="SaddleBrown" Canvas.Right="190" Canvas.Top="351" Canvas.Left="2446" Stretch="Fill" Width="51">
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="True" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="0,-200" Size="50,150" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+                <Ellipse Canvas.Right="90" Canvas.Top="143" Width="290" Height="181" Canvas.Left="2396" RenderTransformOrigin="0.5,0.5" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleX="2.203"/>
+                            <RotateTransform Angle="-62.9"/>
+                            <TranslateTransform X="-0.962"/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="220" Canvas.Top="104" Width="204" Height="100" Canvas.Left="2577" RenderTransformOrigin="0.474,0.608" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="58.687"/>
+                            <TranslateTransform X="-6.677" Y="-9.717"/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="130" Width="176" Height="120" Canvas.Left="2425" RenderTransformOrigin="0.5,0.5" Canvas.Top="60" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleX="-38.928"/>
+                            <RotateTransform/>
+                            <TranslateTransform X="20.192"/>
+                        </TransformGroup>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Right="220" Canvas.Top="160" Width="210" Height="182" Canvas.Left="2502" RenderTransformOrigin="0.458,0.526" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Canvas.Right="70" Canvas.Top="16" Width="205" Height="120" Canvas.Left="2486" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Ellipse Canvas.Right="100" Canvas.Top="310" Width="189" Height="81" Canvas.Left="2502" RenderTransformOrigin="0.963,0.428" >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Green" Offset="0" />
+                            <GradientStop Color="DarkGreen" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:11" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:11" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+            <Canvas>
+                <Rectangle Canvas.Right="220"  Width="10" Height="258" Fill="#A66A00" Canvas.Left="2901" Canvas.Top="273"></Rectangle>
+                <Rectangle Canvas.Right="220"  Width="93" Height="11" Fill="#A66A00" Canvas.Left="2861" Canvas.Top="270" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.001" ScaleX="0.999"/>
+                            <SkewTransform AngleX="-1.495"/>
+                            <RotateTransform Angle="3.509"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="94.015" Canvas.Left="3013.549" Height="403.97" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="490.568">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="False" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-20,-200" Size="20,200" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="87.519" Canvas.Left="2928.333" Height="403.628" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="491.23">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="False" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-10,-50" Size="10,50" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+
+
+
+
+
+
+                <Rectangle Canvas.Right="220"  Width="9" Height="258" Fill="#A66A00" Canvas.Left="3491" Canvas.Top="273"/>
+
+                <Rectangle Canvas.Right="220"  Width="98" Height="11" Fill="#A66A00" Canvas.Left="3447" Canvas.Top="266" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.001" ScaleX="0.999"/>
+                            <SkewTransform AngleX="-1.495"/>
+                            <RotateTransform Angle="3.509"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+
+
+
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="92.143" Canvas.Left="3600.392" Height="388.714" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="476.716">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="False" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-20,-200" Size="20,200" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="90" Canvas.Left="3512.667" Height="384.364" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="476.244">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-39.678"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                    <Path.Data>
+                        <PathGeometry>
+                            <PathFigure IsClosed="False" StartPoint="0,0">
+                                <ArcSegment SweepDirection="Clockwise" Point="-10,-50" Size="10,50" />
+                            </PathFigure>
+                        </PathGeometry>
+                    </Path.Data>
+                </Path>
+
+
+
+
+
+
+                <Rectangle Canvas.Right="220"  Width="9" Height="268" Fill="#A66A00" Canvas.Left="4062" Canvas.Top="257"/>
+
+                <Rectangle Canvas.Right="220"  Width="98" Height="11" Fill="#A66A00" Canvas.Left="4020" Canvas.Top="255" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.001" ScaleX="0.999"/>
+                            <SkewTransform AngleX="-1.495"/>
+                            <RotateTransform Angle="3.509"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Canvas.Right="220"  Width="10" Height="258" Fill="#A66A00" Canvas.Left="4652" Canvas.Top="257"/>
+                <Rectangle Canvas.Right="220"  Width="92" Height="11" Fill="#A66A00" Canvas.Left="4614" Canvas.Top="250" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.001" ScaleX="0.999"/>
+                            <SkewTransform AngleX="-1.495"/>
+                            <RotateTransform Angle="3.509"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="73.015" Canvas.Left="4760.216" Height="403.97" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="490.568" Data="M0,0 A20,200,0,0,1,-20,-200">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="70" Canvas.Left="4684" Height="399.244" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="488.182" Data="M0,0 A10,50,0,0,1,-10,-50">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="73.5" Canvas.Left="4157.187" Height="414.158" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="501.626" Data="M0,0 A10,50,0,0,1,-10,-50">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="74.186" Canvas.Left="4094" Height="403.628" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="491.23" Data="M0,0 A10,50,0,0,1,-10,-50">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+                <Rectangle Canvas.Right="220"  Width="9" Height="258" Fill="#A66A00" Canvas.Left="5236" Canvas.Top="251"/>
+                <Rectangle Canvas.Right="220"  Width="98" Height="11" Fill="#A66A00" Canvas.Left="5196" Canvas.Top="243" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.001" ScaleX="0.999"/>
+                            <SkewTransform AngleX="-1.495"/>
+                            <RotateTransform Angle="3.509"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="64.015" Canvas.Left="5348.216" Height="403.97" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="490.568" Data="M0,0 A20,200,0,0,1,-20,-200">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+                <Path Stroke="DarkGray" StrokeThickness="3"  Canvas.Right="150" Canvas.Top="61.519" Canvas.Left="5269" Height="403.628" RenderTransformOrigin="0.5,0.5" Stretch="Fill" Width="491.23" Data="M0,0 A10,50,0,0,1,-10,-50">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.069" ScaleX="0.936"/>
+                            <SkewTransform AngleY="-6.323"/>
+                            <RotateTransform Angle="-40.173"/>
+                            <TranslateTransform X="-13.711" Y="-19.406"/>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+                <Rectangle Canvas.Right="220"  Width="9" Height="258" Fill="#A66A00" Canvas.Left="5832" Canvas.Top="244"/>
+                <Rectangle Canvas.Right="220"  Width="98" Height="11" Fill="#A66A00" Canvas.Left="5786" Canvas.Top="238" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="1.001" ScaleX="0.999"/>
+                            <SkewTransform AngleX="-1.495"/>
+                            <RotateTransform Angle="3.509"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Rectangle.RenderTransform>
+                </Rectangle>
+
+
+
+
+                <Canvas.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Top)"
+                                       Duration="0:0:5" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="Y" >
+                                </DoubleAnimationUsingPath>
+                                <DoubleAnimationUsingPath Storyboard.TargetProperty="(Canvas.Left)"
+                                       Duration="0:0:5" RepeatBehavior="Forever"
+                                       PathGeometry="{StaticResource land}" Source="X" >
+                                </DoubleAnimationUsingPath>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Canvas.Triggers>
+            </Canvas>
+
+
+
+            <!-- Технические строки для прорисовки пути. Больше не нужны, но уже не прорисовываются, так что пусть остаются -->
+            <Canvas>
+                <Path Stroke="Green" Data="{StaticResource land}"/>
+            </Canvas>
+            <Canvas>
+                <Path Stroke="Red" Data="{StaticResource geometryPath}"/>
+            </Canvas>
+
+
+
+
+
+
+
+
+
+
+        </Canvas>
+
+        <!--Верхняя часть вагона -->
+        <Grid x:Name="vagon">
+            <Grid Grid.Row="0">
+                <StackPanel x:Name="grass"  VerticalAlignment="Bottom" Height="221" Width="985" Canvas.Left="134" Canvas.Top="428" Margin="144,0">
+
+                    <StackPanel.Background>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.7, 0.1">
+                            <GradientStop Color="LightGreen" Offset="0" />
+                            <GradientStop Color="Green" Offset="1" />
+                        </RadialGradientBrush>
+                    </StackPanel.Background>
+
+
+                </StackPanel>
+
+
+                <Rectangle HorizontalAlignment="Left" Width="185" Height="800">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#946808" Offset="0" />
+                            <GradientStop Color="#604303" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <WrapPanel Margin="40 300 0 0">
+                    <GroupBox  FontSize="20" Header="Свет">
+                        <StackPanel Orientation="Horizontal" >
+                            <Button x:Name="lighton" FontSize="20" Click="Lighton_Click" Height="66" Content="Вкл">
+                                <Button.Background>
+                                    <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                        <GradientStop Color="LightBlue" Offset="0" />
+                                        <GradientStop Color="GreenYellow" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Button.Background>
+                            </Button>
+                            <Button x:Name="lightoff" FontSize="20" Click="Lightoff_Click_1" Content="Выкл">
+                                <Button.Background>
+                                    <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                        <GradientStop Color="Orange" Offset="0" />
+                                        <GradientStop Color="DarkRed" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Button.Background>
+                            </Button>
+                        </StackPanel>
+                    </GroupBox>
+                </WrapPanel>
+                <Rectangle HorizontalAlignment="Right" Width="185" Height="800">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#946808" Offset="0" />
+                            <GradientStop Color="#604303" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Polygon Visibility="Hidden" x:Name="lamp1L" Opacity="0.3" Points="50, 150, 400, 50, 250, 400"  RenderTransformOrigin="0.585,0.762" Margin="88,-108,707,386" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Yellow" Offset="0" />
+                            <GradientStop Color="Orange" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleX="-7.194"/>
+                            <RotateTransform Angle="265.578"/>
+                            <TranslateTransform X="2.526" Y="15.959"/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+
+                <Polygon Visibility="Hidden" x:Name="lamp2L" Opacity="0.3" Points="50, 150, 400, 50, 250, 400"  RenderTransformOrigin="0.585,0.762" Margin="727,16,67,262" >
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Yellow" Offset="0" />
+                            <GradientStop Color="Orange" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleX="-7.194"/>
+                            <RotateTransform Angle="360.48"/>
+                            <TranslateTransform X="2.526" Y="15.959"/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+                <Rectangle x:Name="lamp1" Fill="LightYellow" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="50 50 50 50" Width="100" Height="100" RadiusX="30" RadiusY="30"  />
+
+                <Rectangle x:Name="lamp2" Fill="LightYellow" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="50 50 50 50" Width="100" Height="100" RadiusX="30" RadiusY="30"  />
+
+            </Grid>
+
+
+            <!--Нижняя часть вагона -->
+            <Grid x:Name="vagon2" Grid.Row="1">
+
+                <Rectangle HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="1280" Height="200">
+                    <Rectangle.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#946808" Offset="0" />
+                            <GradientStop Color="#604303" Offset="1" />
+                        </RadialGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Line StrokeThickness="5" Stroke="Black" X1="0" Y1="600" X2="1280" Y2="600" />
+                <Polygon Fill="#522601" Points="0, 600, 0,750, 1300, 750, 1280, 600" />
+                <Polygon Points="185, 500, 50,750, 1200, 750, 1085, 500">
+                    <Polygon.Fill>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="#FFC073" Offset="0" />
+                            <GradientStop Color="#BF7F30" Offset="1" />
+                        </RadialGradientBrush>
+                    </Polygon.Fill>
+                </Polygon>
+
+                <Grid>
+                    <Rectangle Fill="DarkGray" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="102" Height="134" Margin="1134,0,38,328" RadiusY="23" RadiusX="23" RenderTransformOrigin="0.5,0.5">
+                        <Rectangle.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform/>
+                                <SkewTransform/>
+                                <RotateTransform Angle="90"/>
+                            </TransformGroup>
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+                    <TextBlock Foreground="AliceBlue" Height="100" Margin="1148,248,18,344" Text="Радиоточка"/>
+                    <Button Content="ВКЛ" x:Name="musstart" HorizontalAlignment="Left" Margin="1124,271,0,0" VerticalAlignment="Top" Width="52" Height="27"  Click="Musstart_Click">
+                        <Button.Background>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="LightBlue" Offset="0" />
+                                <GradientStop Color="GreenYellow" Offset="1" />
+                            </RadialGradientBrush>
+                        </Button.Background>
+                    </Button>
+                    <Button Content="ВЫКЛ" x:Name="musstop" HorizontalAlignment="Left" Margin="1187,271,0,0" VerticalAlignment="Top" Width="52" Height="27" Click="Musstop_Click">
+                        <Button.Background>
+                            <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                                <GradientStop Color="Orange" Offset="0" />
+                                <GradientStop Color="DarkRed" Offset="1" />
+                            </RadialGradientBrush>
+                        </Button.Background>
+                    </Button>
+                </Grid>
+
+            </Grid>
+        </Grid>
+
+        <!-- Билет и кнопка выход -->
+        <StackPanel VerticalAlignment="Bottom">
+            <StackPanel HorizontalAlignment="Left"/>
+
+            <StackPanel Background="Wheat" HorizontalAlignment="Center">
+                <TextBlock  FontFamily="Century Gothic" HorizontalAlignment="Center"  FontSize="20" Foreground="Black">Билет № <TextBox Background="Wheat" x:Name="Ticket"></TextBox></TextBlock>
+                <TextBlock  FontFamily="Century Gothic" HorizontalAlignment="Center"  FontSize="10" Foreground="Black">------------------------------</TextBlock>
+                <TextBlock  FontFamily="Century Gothic" HorizontalAlignment="Center"  FontSize="20" Foreground="Black">Вагон <TextBox Background="Wheat" x:Name="vagonplace"></TextBox></TextBlock>
+                <TextBlock  FontFamily="Century Gothic"  HorizontalAlignment="Center" FontSize="20" Foreground="Black">Место <TextBox Background="Wheat" x:Name="placevagon"></TextBox></TextBlock>
+                <TextBlock  FontFamily="Century Gothic" HorizontalAlignment="Center" FontSize="20" Foreground="Black">Имя <TextBox Background="Wheat"  x:Name="name"></TextBox></TextBlock>
+                <Button x:Name="exit"  FontSize="20" Click="Exit_Click" Content="Выйти">
+                    <Button.Background>
+                        <RadialGradientBrush RadiusX="1" RadiusY="1" GradientOrigin="0.3, 0.3">
+                            <GradientStop Color="Red" Offset="0" />
+                            <GradientStop Color="DarkRed" Offset="1" />
+                        </RadialGradientBrush>
+                    </Button.Background>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+        <Button Content="Button" HorizontalAlignment="Left" Height="0" Margin="-407,925,0,-233" VerticalAlignment="Top" Width="50"/>
+
+
+    </Grid>
+</Window>
